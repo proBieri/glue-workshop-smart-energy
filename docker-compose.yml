@@ -1,0 +1,152 @@
+# docker-compose.yml — gPlug-Workshop
+#
+# Gleiche Befehle unter Windows (PowerShell), macOS und Linux. Auf dem Notebook
+# braucht es nur Docker Desktop; alles andere läuft in Containern.
+#
+#   docker compose build                         Images bauen (einmalig, ~3 min)
+#   docker compose up -d emulator                Emulator starten → http://localhost:8080/emu
+#   docker compose run --rm opencode             KI-Agent opencode (Qwen über Infomaniak)
+#   docker compose up opencode-web               dasselbe im Browser → http://localhost:4096
+#   docker compose run --rm claude               KI-Agent Claude Code
+#   docker compose run --rm opencode modelle     verfügbare Infomaniak-Modelle anzeigen
+#   docker compose run --rm tools bash test.sh   bauen + testen ohne Agent
+#   docker compose up -d referenz                Referenzlösung → http://localhost:8090/emu
+#
+# Bei "up" immer den Dienst nennen: ein nacktes "docker compose up -d" startet ALLE
+# Dienste (auch Agenten und Werkzeuge). Keine Profile, damit es auch mit dem alten
+# docker-compose v1 läuft (ab 1.25; dort "docker-compose" statt "docker compose").
+#
+# Die Agenten starten den Emulator automatisch mit und erreichen ihn als
+# http://emulator:8080 (Variable EMU_URL). Baut ein Agent neu (./build.sh),
+# lädt build.sh die App gleich in den Emulator (POST /emu/api/laden).
+#
+# Das Repo wird nach /workshop gemountet; alle Änderungen landen direkt im Repo.
+# Einstellungen (Token, Ports) in .env — Vorlage: .env.example
+
+# Ohne "version" liest docker-compose v1 die Datei im alten Format 1 und scheitert.
+# 3.7 braucht v1 ab 1.25 (Ubuntu 20.04); Compose v2 meldet dazu nur
+# "the attribute `version` is obsolete" — harmlos.
+version: "3.7"
+
+x-tools-build: &tools-build
+  context: .
+  dockerfile: docker/Dockerfile
+  target: tools
+
+x-agent: &agent
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+    target: agent
+    args:
+      OPENCODE_VERSION: ${OPENCODE_VERSION:-}
+  image: gplug-workshop-agent
+  volumes:
+    - .:/workshop
+    # Build- und Testwerkzeuge schreibgeschützt: Kimi hat am 01.11.2026 die
+    # Test-Infrastruktur "repariert", damit seine App durchkommt
+    - ./build.sh:/workshop/build.sh:ro
+    - ./test.sh:/workshop/test.sh:ro
+    - ./agents-sync.sh:/workshop/agents-sync.sh:ro
+    - opencode-data:/root/.local/share/opencode
+    - opencode-config:/root/.config/opencode
+    - claude-config:/root/.claude
+  # Die Referenzlösung ist für die KI-Agenten unsichtbar (leeres
+  # Verzeichnis darüber) — sonst schreibt der Agent sie einfach ab (passiert am
+  # 31.10.2026 mit Kimi: 94 % identische Zeilen). Auf dem Notebook, im
+  # tools-Container und im Referenz-Emulator bleiben sie sichtbar.
+  tmpfs:
+    - /workshop/referenz
+    # Emulator-Interna und BKW-Beispielantworten: Build/Tests nutzen die Kopie im
+    # Image (EMU_DIR=/opt/gplug/emulator). Ein Agent, der sie liest, bezahlt sie
+    # bei jedem weiteren Schritt erneut (gemessen: emu.be allein ~10 000 Tokens).
+    - /workshop/emulator
+  environment:
+    EMU_URL: http://emulator:8080
+    TERM: xterm-256color
+    # 24-Bit-Farben, falls das Terminal sie kann (iTerm2, Windows Terminal, Ghostty …)
+    COLORTERM: ${COLORTERM:-}
+    OPENCODE_WEB_PORT: ${OPENCODE_WEB_PORT:-4096}
+    # Infomaniak AI Tools (Qwen) für opencode
+    INFOMANIAK_API_KEY: ${INFOMANIAK_API_KEY:-}
+    INFOMANIAK_PRODUCT_ID: ${INFOMANIAK_PRODUCT_ID:-}
+    INFOMANIAK_MODEL: ${INFOMANIAK_MODEL:-}
+    INFOMANIAK_BASE_URL: ${INFOMANIAK_BASE_URL:-}
+    INFOMANIAK_CONTEXT: ${INFOMANIAK_CONTEXT:-}
+    INFOMANIAK_OUTPUT: ${INFOMANIAK_OUTPUT:-}
+    INFOMANIAK_THINKING: ${INFOMANIAK_THINKING:-}
+    OPENCODE_STEPS: ${OPENCODE_STEPS:-}
+    # Claude Code: Login im Container (Link öffnen, Code einfügen) oder API-Schlüssel
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    CLAUDE_CONFIG_DIR: /root/.claude
+    # Ortszeit für Shells, Logs und Dateizeiten (date, ls); die Emulator-Uhr rechnet
+    # unabhängig davon in UTC + eigener Zeitzone wie Tasmota
+    TZ: ${GPLUG_TZ:-Europe/Zurich}
+  depends_on:
+    - emulator
+  stdin_open: true
+  tty: true
+
+services:
+  emulator:
+    build: *tools-build
+    image: gplug-workshop-tools
+    volumes:
+      - .:/workshop
+    ports:
+      - "${EMU_PORT:-8080}:8080"
+    environment:
+      # auto = live-API, solange die Emulator-Uhr der echten Zeit entspricht, sonst Fixture
+      BKW_MODE: ${BKW_MODE:-auto}
+      GPLUG_SRC: gplug
+      GPLUG_BUILD: build
+      TZ: ${GPLUG_TZ:-Europe/Zurich}         # siehe x-agent
+    command: ["python3", "emulator/server.py"]
+
+  referenz:
+    image: gplug-workshop-tools
+    build: *tools-build
+    volumes:
+      - .:/workshop
+    ports:
+      - "${REFERENZ_PORT:-8090}:8080"
+    environment:
+      BKW_MODE: ${BKW_MODE:-auto}
+      GPLUG_SRC: referenz/gplug
+      GPLUG_BUILD: build/referenz
+      TZ: ${GPLUG_TZ:-Europe/Zurich}         # siehe x-agent
+    command: ["python3", "emulator/server.py"]
+
+  tools:
+    image: gplug-workshop-tools
+    build: *tools-build
+    volumes:
+      - .:/workshop
+    environment:
+      TZ: ${GPLUG_TZ:-Europe/Zurich}         # siehe x-agent
+    entrypoint: []
+    command: ["bash"]
+
+  opencode:
+    <<: *agent
+
+  claude:
+    <<: *agent
+    entrypoint: ["claude"]
+
+  # opencode im Browser statt im Terminal (schöner, auch unter Windows):
+  #   docker compose up opencode-web
+  # → Link aus der Ausgabe öffnen. Nicht gleichzeitig mit "run --rm opencode"
+  #   verwenden (beide teilen sich die opencode-Datenbank).
+  opencode-web:
+    <<: *agent
+    command: ["web"]
+    stdin_open: false
+    tty: false
+    ports:
+      - "127.0.0.1:${OPENCODE_WEB_PORT:-4096}:4096"
+
+volumes:
+  opencode-data:
+  opencode-config:
+  claude-config:

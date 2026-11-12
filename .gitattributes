@@ -1,0 +1,6 @@
+# Windows: Skripte und Quellen immer mit LF auschecken, sonst scheitert
+# bash im Container an "\r" (z.B. "/usr/bin/env: 'bash\r': No such file").
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.tapp binary

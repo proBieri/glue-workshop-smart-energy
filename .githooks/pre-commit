@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# pre-commit — verhindert Commits, wenn Befehle/Skills für opencode und
+# Claude Code auseinanderlaufen. Aktivieren (einmal pro Klon):
+#   git config core.hooksPath .githooks
+ROOT="$(git rev-parse --show-toplevel)"
+if ! bash "$ROOT/agents-sync.sh" --check --quiet; then
+  echo "pre-commit: zuerst ./agents-sync.sh ausführen und die Änderungen hinzufügen (git add .opencode .claude)" >&2
+  exit 1
+fi

@@ -1,0 +1,79 @@
+<!-- gplug_ui.html: vorgegeben, nicht ändern (spec/uc3-webui.md) -->
+<style>#gp_w{background:#1a1c2c;color:#e6e6e6;border-radius:10px;padding:10px 6px;margin:6px 0 12px;font-family:sans-serif;text-align:left}#gp_w .ks{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}#gp_w .k{flex:1 1 40%;background:#24273a;border-radius:8px;padding:6px 9px}#gp_w .kl{font-size:11px;color:#9aa0b4}#gp_w .kv{font-size:21px;font-weight:bold}#gp_w .ke{font-size:11px;color:#9aa0b4;font-weight:normal}#gp_lg{font-size:11px;display:flex;flex-wrap:wrap;gap:4px 12px;margin:2px 4px 4px;min-height:14px}</style>
+<div id='gp_w' style='display:none'><div class='ks'>
+<div class='k'><div class='kl'>Einspeisetarif jetzt</div><div class='kv'><span id='gk_p'>–</span> <span class='ke'>Rp/kWh</span></div></div>
+<div class='k'><div class='kl'>Vergütung heute</div><div class='kv' style='color:#ffb74d'><span id='gk_v'>–</span> <span class='ke'>CHF</span></div></div>
+<div class='k'><div class='kl'>Einspeisung heute</div><div class='kv' style='color:#81c784'><span id='gk_e'>–</span> <span class='ke'>kWh</span></div></div>
+<div class='k'><div class='kl'>Bezug heute</div><div class='kv' style='color:#ba68c8'><span id='gk_b'>–</span> <span class='ke'>kWh</span></div></div>
+</div><div id='gp_lg'></div>
+<svg id='gp_s' viewBox='0 0 328 290' style='display:block;width:100%;height:auto;font-family:sans-serif'><g id='gp_g'></g></svg></div>
+<script>
+(function(){
+var D=document;function $(i){return D.getElementById(i)}
+var w=$('gp_w'),l1=$('l1');if(w&&l1&&l1.parentNode)l1.parentNode.insertBefore(w,l1);w.style.display='';
+var NS='http://www.w3.org/2000/svg',CP='#4fc3f7',CE='#81c784',CN='#c4865a',CB='#ba68c8',CV='#ffb74d',CR='#e57373',GR='#9aa0b4',LN='#3a3e55',
+X0=26,T=14,H=150,B=T+H,VT=B+50,VH=60,K=1.5,G=null,DD=null,WT=['So','Mo','Di','Mi','Do','Fr','Sa'];
+function sp(c,s){return "<span style='color:"+c+"'>"+s+"</span>"}
+var LG=sp(CE,'&#9632; Einspeisung')+sp(CB,'&#9632; Bezug')+sp(CP,'&#9473; Tarif')+sp(CN,'&#9632; Einspeisung bei Tarif &lt; 0'),lg=$('gp_lg');lg.innerHTML=LG;
+function el(n,a){var e=D.createElementNS(NS,n);for(var k in a)e.setAttribute(k,a[k]);G.appendChild(e);return e}
+function tx(x,y,s,a,c,f,b){var e=el('text',{x:x,y:y,'font-size':f||8,'text-anchor':a||'middle',fill:c||GR});if(b)e.setAttribute('font-weight','bold');e.textContent=s}
+function ln(x1,y1,x2,y2,c,d){var a={x1:x1,y1:y1,x2:x2,y2:y2,stroke:c||LN};if(d)a['stroke-dasharray']=d;el('line',a)}
+function nice(v){var m=Math.pow(10,Math.floor(Math.log(v)/Math.LN10)),s=[1,1.5,2,2.5,3,4,5,6,8,10];for(var i=0;i<10;i++)if(s[i]*m>=v*.9999)return s[i]*m;return 10*m}
+function dec(s,n){var b=atob(s||''),r=[],i,v;for(i=0;i<n;i++){if(2*i+1>=b.length){r.push(null);continue}v=b.charCodeAt(2*i)|b.charCodeAt(2*i+1)<<8;r.push(v==32768?null:v>32767?v-65536:v)}return r}
+function fz(v){return v>=10?v.toFixed(0):v>=1?v.toFixed(1):v.toFixed(2)}
+function hh(i){return ('0'+i).slice(-2)}
+function kacheln(){var e=$('gp_d');if(!e)return;try{var d=JSON.parse(e.getAttribute('data-v')),p=$('gk_p');
+p.textContent=d.p==null?'–':(d.p/100).toFixed(2);p.style.color=d.p<0?CR:CP;$('gk_v').textContent=d.v.toFixed(2);
+$('gk_e').textContent=(d.e/1000).toFixed(2);$('gk_b').textContent=(d.b/1000).toFixed(2)}catch(x){}}
+kacheln();if(l1&&window.MutationObserver)new MutationObserver(kacheln).observe(l1,{childList:true,subtree:true});
+function balken(c){var d='';return{add:function(i,y0,y1){if(Math.abs(y1-y0)<.5)y1=y0+(y1<y0?-.5:.5);d+='M'+(X0+i*K).toFixed(2)+','+y0.toFixed(1)+'h'+K+'V'+y1.toFixed(1)+'h-'+K+'z'},zeig:function(){if(d)el('path',{d:d,fill:c})}}}
+function draw(j){
+G=$('gp_g');while(G.firstChild)G.removeChild(G.firstChild);
+var p=dec(j.p,288),e=dec(j.e,192),b=dec(j.b,192),m=false,i,emax=.1,bmax=0,pmax=10,pmin=0,r=[],rmax=.01,rmin=0,sum=0;
+for(i=192;i<288;i++)if(p[i]!=null)m=true;
+K=m?1:1.5;var nd=m?3:2,n=nd*96;
+for(i=0;i<n;i++){if(p[i]!=null){pmax=Math.max(pmax,p[i]/100);pmin=Math.min(pmin,p[i]/100)}
+if(i<192){if(e[i]!=null)emax=Math.max(emax,e[i]/1000);if(b[i]!=null)bmax=Math.max(bmax,b[i]/1000);
+r[i]=e[i]!=null&&p[i]!=null?e[i]*p[i]/1e7:null;if(r[i]!=null){sum+=r[i];rmax=Math.max(rmax,r[i]);rmin=Math.min(rmin,r[i])}}}
+var f=(bmax==0&&pmin==0)?1:Math.max(.4,Math.min(.85,(emax/(emax+bmax)+pmax/(pmax-pmin))/2)),Z=T+H*f,up=Z-T,dn=B-Z;
+var et=nice(Math.max(emax/up,dn?bmax/dn:0)*up),se=et/up,pt=nice(Math.max(pmax/up,dn?-pmin/dn:0)*up),sq=pt/up,XE=X0+n*K;
+function ye(v){return Z-v/se}function yp(v){return Z-v/sq}function xi(i){return X0+i*K}
+if(m){el('rect',{x:xi(192),y:T,width:96,height:H,fill:CP,'fill-opacity':.06});el('rect',{x:xi(192),y:VT,width:96,height:VH,fill:CP,'fill-opacity':.06});tx(xi(240),B-4,'Tarif BKW','middle',CP)}
+else tx(XE-2,B-4,'Tarif morgen ab ~18 Uhr','end',CP);
+if(pmin<0){el('rect',{x:X0,y:Z,width:n*K,height:dn,fill:CR,'fill-opacity':.08});tx(X0+3,B-4,'negativer Tarif','start',CR)}
+ln(X0,T,XE,T);ln(X0,(T+Z)/2,XE,(T+Z)/2);ln(X0,B,XE,B);ln(X0,Z,XE,Z,'#55597a');
+tx(1,T-5,'kWh/¼h','start');tx(327,T-5,'Rp/kWh','end',CP);
+tx(X0-3,T+3,fz(et),'end',CE);tx(X0-3,(T+Z)/2+3,fz(et/2),'end',CE);tx(X0-3,Z+3,'0','end');
+tx(XE+2,T+3,fz(pt),'start',CP);tx(XE+2,(T+Z)/2+3,fz(pt/2),'start',CP);tx(XE+2,Z+3,'0','start',CP);
+if(dn>12){if(bmax)tx(X0-3,B+3,'-'+fz(se*dn),'end',CB);if(pmin<0)tx(XE+2,B+3,'-'+fz(sq*dn),'start',CP)}
+for(i=0;i<nd;i++){var x=xi(i*96),dt=new Date((j.t+i*86400)*1000);if(i){ln(x,T,x,B,'#55597a','2,3');ln(x,VT,x,VT+VH,'#55597a','2,3')}
+tx(x,B+11,'00');tx(xi(i*96+48),B+11,'12');tx(x,VT+VH+11,'00');tx(xi(i*96+48),VT+VH+11,'12');
+tx(xi(i*96+48),B+24,WT[dt.getUTCDay()]+' '+hh(dt.getUTCDate())+'.'+hh(dt.getUTCMonth()+1)+'.','middle','#e6e6e6',10)}
+var be=balken(CE),bn=balken(CN),bb=balken(CB);
+for(i=0;i<192&&i<n;i++){if(e[i]>0)((p[i]!=null&&p[i]<0)?bn:be).add(i,Z,ye(e[i]/1000));if(b[i]>0)bb.add(i,Z,ye(-b[i]/1000))}
+be.zeig();bn.zeig();bb.zeig();
+var pts='';function zieh(da){if(pts)el('polyline',{points:pts,fill:'none',stroke:CP,'stroke-width':1.3,'stroke-dasharray':da||'none'});pts=''}
+for(i=0;i<n;i++){if(i==192)zieh();if(p[i]==null){zieh(i>192?'3,2':0);continue}var y=yp(p[i]/100).toFixed(1);pts+=xi(i).toFixed(1)+','+y+' '+xi(i+1).toFixed(1)+','+y+' '}
+zieh(n>192?'3,2':0);
+rmax=nice(rmax);rmin=rmin<0?-nice(-rmin):0;var RZ=VT+VH*rmax/(rmax-rmin);function yr(v){return RZ-v/(rmax-rmin)*VH}
+tx(X0,VT-8,'Vergütung','start',CV,12,1);tx(X0+64,VT-8,'CHF/¼h','start',GR,9);tx(XE,VT-8,'Σ '+sum.toFixed(2)+' CHF','end','#e6e6e6',11);
+ln(X0,VT,XE,VT);ln(X0,VT+VH,XE,VT+VH);ln(X0,RZ,XE,RZ,'#55597a');
+tx(X0-3,VT+3,rmax.toFixed(rmax<.1?3:2),'end',CV);tx(X0-3,RZ+3,'0','end');if(rmin<0)tx(X0-3,VT+VH+3,rmin.toFixed(-rmin<.1?3:2),'end',CR);
+var bv=balken(CV),br=balken(CR);for(i=0;i<192&&i<n;i++)if(r[i])(r[i]<0?br:bv).add(i,RZ,yr(r[i]));bv.zeig();br.zeig();
+var xj=xi((j.n-j.t)/900);if(xj>=X0&&xj<=XE){ln(xj,T,xj,B,'#c8cbe0');ln(xj,VT,xj,VT+VH,'#c8cbe0');tx(xj-3,T+10,'jetzt','end','#c8cbe0')}
+el('rect',{id:'gp_cb',y:T,width:2,height:VT+VH-T,fill:'#fff','fill-opacity':.2,display:'none','pointer-events':'none'});
+DD={p:p,e:e,b:b,r:r,t:j.t,n:n}}
+function upd(){fetch('gplug/chart.json').then(function(r){return r.json()}).then(draw).catch(function(){})}
+upd();setInterval(upd,300000);
+var sv=$('gp_s');
+function weg(){var c=$('gp_cb');if(c)c.setAttribute('display','none');lg.innerHTML=LG}
+function zeig(ev){var c=$('gp_cb');if(!DD||!c)return;var t=ev.touches?ev.touches[0]:ev,R=sv.getBoundingClientRect(),i=Math.floor(((t.clientX-R.left)*328/R.width-X0)/K);
+if(i<0||i>=DD.n)return weg();
+var p=DD.p[i],e=i<192?DD.e[i]:null,b=i<192?DD.b[i]:null,v=i<192?DD.r[i]:null,wd=Math.max(K,2),z=new Date((DD.t+i*900)*1000);
+c.setAttribute('display','');c.setAttribute('x',X0+(i+.5)*K-wd/2);c.setAttribute('width',wd);
+lg.innerHTML='<b>'+WT[z.getUTCDay()]+' '+hh(z.getUTCHours())+':'+hh(z.getUTCMinutes())+'</b>'+sp(CP,(p==null?'–':(p/100).toFixed(2))+' Rp/kWh')
++(e==null?'':sp(CE,'&#9650; '+(e/1000).toFixed(3)+' kWh'))+(b==null?'':sp(CB,'&#9660; '+(b/1000).toFixed(3)+' kWh'))+(v==null?'':sp(v<0?CR:CV,v.toFixed(3)+' CHF'))}
+sv.addEventListener('mousemove',zeig);sv.addEventListener('mouseleave',weg);
+sv.addEventListener('touchstart',zeig,{passive:true});sv.addEventListener('touchmove',zeig,{passive:true});
+})();
+</script>

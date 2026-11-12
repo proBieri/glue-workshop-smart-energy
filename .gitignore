@@ -1,0 +1,16 @@
+# Build-Ergebnisse (./build.sh)
+build/
+
+# Dateisystem des Emulators (CSV, persist, Konfiguration)
+emulator/fs/
+emulator/fs-*/
+
+# Geheimnisse (Infomaniak-Token)
+.env
+
+.DS_Store
+__pycache__/
+
+# IDE
+.idea/
+.rote_tests.json

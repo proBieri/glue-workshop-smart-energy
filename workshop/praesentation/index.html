@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>gPlug-App für die Vergütung 2027</title>
+<style>
+:root{
+  --bg:#f6f5f1;--fg:#1d2329;--mut:#5d6670;--line:#d9d6cc;--card:#ffffff;
+  --acc:#0b7fc1;--green:#2e7d32;--blue:#1565c0;--orange:#e07000;--red:#c62828;
+  --code:#1f252b;--codefg:#e8eaed;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#15181b;--fg:#e9ecef;--mut:#9aa3ad;--line:#2c3238;--card:#1d2226;--acc:#4fb3ef;--green:#66bb6a;--blue:#64b5f6;--orange:#ffa726;--red:#ef5350;--code:#0e1113}
+}
+:root[data-theme="dark"]{--bg:#15181b;--fg:#e9ecef;--mut:#9aa3ad;--line:#2c3238;--card:#1d2226;--acc:#4fb3ef;--green:#66bb6a;--blue:#64b5f6;--orange:#ffa726;--red:#ef5350;--code:#0e1113}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif}
+.deck{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+.slide{display:none;width:1280px;height:720px;padding:64px 80px;position:relative;transform-origin:center center}
+.slide.on{display:flex;flex-direction:column}
+h1{font-size:56px;line-height:1.08;margin:0 0 20px;letter-spacing:-.02em}
+h2{font-size:40px;margin:0 0 28px;letter-spacing:-.01em}
+h3{font-size:22px;margin:0 0 10px;color:var(--acc)}
+p,li{font-size:24px;line-height:1.45}
+ul{margin:0;padding-left:28px}li{margin:6px 0}
+.mut{color:var(--mut)}.small{font-size:18px}
+.kicker{font-size:18px;text-transform:uppercase;letter-spacing:.12em;color:var(--acc);font-weight:600;margin-bottom:14px}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:40px;flex:1;min-height:0}
+.cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.repo{gap:14px}.repo .card{padding:12px 16px}.repo h3{font-size:19px;margin:0 0 6px}.repo .card p{font-size:16px;line-height:1.4;margin:0}
+.cols>table,.cols>pre,.cols>.card{align-self:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 24px}
+.card p,.card li{font-size:20px}
+pre{background:var(--code);color:var(--codefg);border-radius:12px;padding:18px 22px;font:17px/1.5 ui-monospace,"SF Mono",Menlo,monospace;margin:0;overflow:hidden;white-space:pre}
+code{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:.9em;background:color-mix(in srgb,var(--acc) 12%,transparent);padding:1px 6px;border-radius:5px}
+pre code{background:none;padding:0;font-size:inherit}
+.k{color:#c792ea}.s{color:#c3e88d}.c{color:#7f8c98}.n{color:#f78c6c}
+table{border-collapse:collapse;width:100%;font-size:21px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}th{color:var(--mut);font-weight:600}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.big{font-size:84px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.flow{display:flex;align-items:center;gap:12px;margin:12px 0 24px}
+.flow .st{flex:1;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:14px;text-align:center;font-size:21px;font-weight:600}
+.flow .st small{display:block;font-weight:400;color:var(--mut);font-size:16px;margin-top:4px}
+.flow .ar{color:var(--mut);font-size:28px}
+.st.hl{border-color:var(--acc)}
+.bad{color:var(--red);font-weight:700}.good{color:var(--green);font-weight:700}
+.foot{position:absolute;left:80px;right:80px;bottom:28px;display:flex;justify-content:space-between;font-size:14px;color:var(--mut)}
+img.shot{max-height:560px;border-radius:12px;border:1px solid var(--line);box-shadow:0 8px 30px rgba(0,0,0,.18)}
+.center{align-items:center;justify-content:center;text-align:center}
+.tag{display:inline-block;padding:3px 12px;border-radius:999px;border:1px solid var(--line);font-size:17px;margin:3px 4px 3px 0}
+.nav{position:fixed;right:16px;bottom:12px;font-size:13px;color:var(--mut);user-select:none}
+.nav button{background:none;border:1px solid var(--line);color:var(--mut);border-radius:6px;padding:2px 8px;cursor:pointer;margin-left:4px}
+@media print{.slide{display:flex!important;page-break-after:always;transform:none!important}.deck{position:static;display:block}.nav{display:none}}
+</style>
+</head>
+<body>
+<div class="deck" id="deck">
+
+<!-- 1 Titel -->
+<section class="slide on">
+  <div style="margin-top:auto">
+    <div class="kicker">Workshop · Glue AG · 12. November 2026</div>
+    <h1>Eine eigene gPlug-App<br>für die Vergütung 2027</h1>
+    <p class="mut" style="font-size:28px;max-width:900px">Mit KI bauen, im Emulator testen, auf den eigenen gPlug laden.</p>
+  </div>
+  <div style="margin-top:auto" class="mut small">Michael Bieri</div>
+</section>
+
+<!-- 4 Architektur -->
+<section class="slide">
+  <div class="kicker">Die Aufgabe</div>
+  <h2>Vier Use Cases, eine App — plus Zusatz</h2>
+  <div class="cols3">
+    <div class="card"><h3>UC1 Tarife</h3><p>BKW-API nach dem Start und stündlich, wenn heute/morgen fehlt</p><p class="small mut">→ 3 Tage × 96 Viertelstunden × int16</p></div>
+    <div class="card"><h3>UC2 Zähler</h3><p>jede Viertelstunde Zählerstände lesen (<code>Eo</code>/<code>Ei</code> oder Namen aus <code>/gplug.json</code>), Differenz in Wh</p><p class="small mut">→ Ausfälle sauber behandeln</p></div>
+    <div class="card"><h3>UC3 Grafik</h3><p>Kacheln und 3-Tage-Grafik: Oberfläche <code>gplug_ui.html</code> ist vorgegeben, die App liefert die Daten</p><p class="small mut">→ <code>/gplug/chart.json</code> + Daten-<code>div</code></p></div>
+    <div class="card"><h3>UC4 CSV</h3><p>00:01 eine Zeile für gestern in <code>/gplug_JJJJ-MM.csv</code></p><p class="small mut">→ max. 3 Monate</p></div>
+    <div class="card"><h3>Zusatz</h3><p>UC5 Zählernamen automatisch aus <code>/script.txt</code>, UC6 Befehle <code>GplugInfo</code>, <code>GplugPreise</code>, <code>GplugAbruf</code></p><p class="small mut">→ nur wenn Zeit bleibt</p></div>
+    <div class="card"><h3>Spezifikation</h3><p><code>spec/uc*.md</code>: Vertrag, Regeln, Testtabelle — 45 Tests</p><p class="small mut">Testcode in der Spec, eingeklappt; kein Use Case braucht einen späteren</p></div>
+  </div>
+</section>
+
+<!-- Repo -->
+<section class="slide">
+  <div class="kicker">Das Repo</div>
+  <h2>Was wo liegt</h2>
+  <div class="cols3 repo">
+    <div class="card"><h3><code>spec/</code></h3><p>pro Use Case Vertrag, Regeln, Testtabelle und ausführbare Tests (eingeklappt) · <code>README.md</code>: Test-Hilfen <code>T.*</code></p></div>
+    <div class="card"><h3><code>gplug/</code></h3><p><b>deine App</b>: Start mit <code>main.be</code> und der vorgegebenen Oberfläche <code>gplug_ui.html</code></p></div>
+    <div class="card"><h3><code>AGENTS.md</code></h3><p>gemessene Fakten und Stolpersteine — liest jeder Agent bei jedem Schritt mit</p></div>
+    <div class="card"><h3>Befehle</h3><p><code>/plan</code>, <code>/build</code> in <code>.opencode/commands/</code> (gleich in <code>.claude/</code>) — so sieht ein guter Auftrag aus</p></div>
+    <div class="card"><h3>Skills</h3><p><code>tasmota-berry</code>: Sprache + Tasmota-API, jedes Beispiel geprüft · <code>tasmota-lowmem-webui</code>: Hauptseite, Heap</p></div>
+    <div class="card"><h3><code>emulator/</code></h3><p>Tasmota-API in Berry nachgebaut, Zähler- und BKW-Simulation, Bedienfeld <code>:8080/emu</code>, Testrunner</p></div>
+    <div class="card"><h3><code>build.sh</code> · <code>test.sh</code></h3><p>echter Compiler → <code>build/gplug.tapp</code>, lädt in den Emulator · jeder Testblock in frischem Emulator</p></div>
+    <div class="card"><h3><code>referenz/</code></h3><p>Musterlösung, alle Tests grün, läuft auf <code>:8090</code> — für den Agenten unsichtbar</p></div>
+    <div class="card"><h3><code>workshop/</code> · <code>docker/</code></h3><p>Folien, Grundlagen, Anleitung · Images <code>tools</code> und <code>agent</code> (opencode, Claude Code)</p></div>
+  </div>
+</section>
+
+<!-- 5 WebUI -->
+<section class="slide">
+  <div class="kicker">Grundlagen</div>
+  <h2>Die Hauptseite: was wie oft läuft</h2>
+  <div class="cols">
+    <table>
+      <tr><th>Hook</th><th>wann</th><th>wofür</th></tr>
+      <tr><td><code>web_add_main_button()</code></td><td>1× pro Seitenaufruf</td><td>SVG, JS — das Skelett</td></tr>
+      <tr><td><code>web_sensor()</code></td><td><b>alle ~2 s</b></td><td>Momentanwerte als Daten-<code>div</code></td></tr>
+      <tr><td><code>webserver.on(…)</code></td><td>wann der Browser will</td><td><code>chart.json</code> alle 5 min</td></tr>
+    </table>
+    <div>
+      <ul>
+        <li><code>web_sensor()</code> <b>ersetzt</b> den Bereich <code>#l1</code> bei jedem Poll</li>
+        <li>Grafik als Geschwister <b>vor</b> <code>#l1</code> verschieben</li>
+        <li>Server schickt Rohwerte — der Browser rechnet</li>
+        <li>Grosses HTML als Datei in der <code>.tapp</code>, nicht als String im Code</li>
+      </ul>
+      <p class="small mut" style="margin-top:16px">Skill: <code>.claude/skills/tasmota-lowmem-webui</code></p>
+    </div>
+  </div>
+</section>
+
+<!-- 6 KI-Workflow -->
+<section class="slide">
+  <div class="kicker">Vorgehen</div>
+  <h2>Mit der KI bauen — mit Leitplanken</h2>
+  <div class="flow">
+    <div class="st">Spec<small>spec/uc*.md</small></div><div class="ar">→</div>
+    <div class="st hl">/plan ucN<small>Plan im Chat, nur lesen</small></div><div class="ar">→</div>
+    <div class="st hl" style="flex:2">/build ucN<small>schreibt <code>gplug/*.be</code> · <code>build.sh</code> (echter Compiler) · <code>test.sh</code> bis grün · <code>.tapp</code> im Emulator</small></div>
+  </div>
+  <div class="cols">
+    <div class="card"><h3>Ohne Leitplanken</h3>
+      <p>Der erste Entwurf dieses Repos:</p>
+      <ul class="small"><li><code>tasmota.http_get</code>, <code>tasmota.timer_set</code>, <code>tasmota.file_read</code> — gibt es alle nicht</li><li><code>json.load</code> der 21 kB</li><li>Build meldete „OK“ ohne zu kompilieren</li></ul></div>
+    <div class="card"><h3>Mit Leitplanken</h3>
+      <ul class="small"><li><code>AGENTS.md</code>: verifizierte Fakten und Stolpersteine</li><li>Build bricht bei jedem Fehler ab, zeigt <code>datei.be:zeile</code></li><li>Tests sagen genau, welcher Vertrag verletzt ist</li><li>Der Agent sieht seine Fehler selbst und korrigiert</li><li>Stopp-Regel: derselbe Test nach 3 Versuchen rot → anhalten und berichten</li><li><code>rm</code>, <code>mv</code>, <code>git checkout</code> gesperrt — ein Agent hat im Test <code>build/</code> gelöscht</li></ul></div>
+  </div>
+</section>
+
+<!-- 7 Setup -->
+<section class="slide">
+  <div class="kicker">Setup · Windows, macOS, Linux</div>
+  <h2>Nur Docker Desktop — der Rest läuft im Container</h2>
+  <div class="cols">
+<pre style="font-size:17px"><span class="c"># einmalig</span>
+docker compose build   <span class="c"># auch nach jedem git pull</span>
+cp .env.example .env   <span class="c"># Windows: copy</span>
+
+<span class="c"># Emulator → localhost:8080/emu</span>
+docker compose up -d emulator
+
+<span class="c"># KI-Agent: eins von beiden</span>
+docker compose run --rm opencode
+docker compose run --rm claude
+
+<span class="c"># ohne Agent</span>
+docker compose run --rm tools bash test.sh</pre>
+    <div>
+      <div class="card"><h3>opencode · Qwen3.5 397B</h3>
+        <p class="small">über Infomaniak, Daten bleiben in der Schweiz. Zugang in <code>.env</code>: <code>INFOMANIAK_API_KEY</code>, <code>INFOMANIAK_PRODUCT_ID</code>.</p></div>
+      <div class="card" style="margin-top:16px"><h3>Claude Code · eigener Zugang</h3>
+        <p class="small">Login im Container. <code>/plan</code> im Plan-Modus (<code>Shift+Tab</code>), dann zurück für <code>/build</code>.</p></div>
+      <p class="small mut" style="margin-top:16px">Gleicher Compiler wie auf dem gPlug (Tasmota 15.3.0).</p>
+    </div>
+  </div>
+</section>
+
+<!-- 8 Emulator -->
+<section class="slide">
+  <div class="kicker">Werkzeuge</div>
+  <h2>Der Emulator: ein gPlug auf dem Notebook</h2>
+  <div class="cols">
+    <ul>
+      <li>Tasmota-Hauptseite mit gleicher Poll-Mechanik</li>
+      <li>Uhr mit <b>Zeitraffer bis 3600×</b> — Cron feuert exakt</li>
+      <li>Zähler-Simulator im gPlug-Format, PV-Tagesgang, Ausfall per Klick</li>
+      <li>BKW-API <b>live</b>, simuliert oder <b>Netzwerkfehler</b></li>
+      <li>Konsole: <code>Status 10</code>, <code>Br …</code>, eigene Befehle (UC6)</li>
+      <li>Dateisystem: CSV ansehen und laden</li>
+    </ul>
+    <div class="card small">
+      <h3>Tests sind Szenarien</h3>
+<pre style="font-size:15px">T.test(<span class="s">"UC1-4 Ab 18 Uhr … morgen"</span>, <span class="k">def</span> ()
+  <span class="k">var</span> n = T.abrufe()
+  T.bis(<span class="n">18</span>, <span class="n">10</span>)
+  T.eq(T.abrufe(), n + <span class="n">1</span>, <span class="s">"Abrufe"</span>)
+  <span class="k">var</span> d = T.json(<span class="s">"/gplug/chart.json"</span>)
+  …
+<span class="k">end</span>)</pre>
+      <p class="small mut" style="margin-top:12px">Start immer Mi 11.11.2026 10:00, leeres Dateisystem.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 9 Aufgabe -->
+<section class="slide">
+  <div class="kicker">Jetzt du</div>
+  <h2>So gehst du vor</h2>
+  <p>Pro Use Case, der Reihe nach UC1 → UC4 (UC5, UC6 als Zusatz):</p>
+  <ol style="font-size:24px;line-height:1.6;padding-left:30px">
+    <li><code>/plan ucN</code> — und <b>den Plan lesen</b> (APIs? <code>json.load</code>? <code>bytes()</code>?)</li>
+    <li><code>/build ucN</code> — der Agent baut und testet, bis die Tests grün sind; danach läuft die App im Emulator</li>
+    <li>Im Emulator anschauen, dann <code>/new</code> für den nächsten Use Case</li>
+  </ol>
+  <ul class="small" style="margin-top:18px">
+    <li>Hört der Agent mitten im Satz auf (<code>[Assistant tool call]</code> o.ä.)? <code>weiter</code> senden.</li>
+    <li>Meldet er nach 3 Versuchen einen roten Test? Neue Sitzung, gleichen Use Case neu planen — oder die Fehlermeldung wörtlich zurückgeben.</li>
+    <li>„Alles grün“ selbst prüfen: <code>bash test.sh</code>.</li>
+  </ul>
+  <p style="margin-top:24px"><b>Fertig:</b> <code>=== Testblöcke: 13 bestanden, 0 fehlgeschlagen ===</code></p>
+</section>
+
+<!-- 10 Deploy -->
+<section class="slide">
+  <div class="kicker">19:35</div>
+  <h2>Auf den gPlug laden</h2>
+  <div class="cols">
+    <ol style="font-size:23px;line-height:1.6;padding-left:30px">
+      <li><code>build/gplug.tapp</code> (von <code>/build</code>)</li>
+      <li><i>Werkzeuge → Dateisystem verwalten</i> → hochladen</li>
+      <li><code>Status 10</code>: heissen die Zähler nicht <code>Eo</code>/<code>Ei</code> → <code>gplug.json</code> mit <code>key_ein</code>, <code>key_bez</code>, <code>einheit</code></li>
+      <li><i>Neustart</i></li>
+      <li>nach ~20 s: Tarif und Grafik auf der Hauptseite</li>
+    </ol>
+    <div class="card">
+      <h3>Prüfen</h3>
+<pre style="font-size:16px">http://&lt;gplug&gt;/gplug/chart.json
+Br tasmota.memory()</pre>
+      <ul class="small" style="margin-top:12px"><li>Tarif-Kachel gefüllt (mit UC6: <code>GplugInfo</code> → <code>Preise_heute</code> = 96)</li><li><code>heap_free</code> deutlich über 50 kB</li><li>Energie ab der nächsten Viertelstunde</li><li>CSV nach dem ersten vollen Tag</li></ul>
+    </div>
+  </div>
+</section>
+
+<!-- 11 Ergebnis -->
+<section class="slide">
+  <div class="kicker">So kann es aussehen</div>
+  <div class="cols" style="align-items:center">
+    <div>
+      <h2>Die Referenzlösung</h2>
+      <ul class="small">
+        <li>8 Dateien, ~700 Zeilen Berry + 1 HTML-Datei</li>
+        <li>Puffer: 3 × 576 Byte (Tarif, Einspeisung, Bezug)</li>
+        <li>BKW-Antwort gestreamt, stückweise gelesen</li>
+        <li>45 Abnahmetests grün · läuft auf einem gPlugK</li>
+      </ul>
+      <p class="small mut" style="margin-top:20px"><code>referenz/gplug/</code> — wer nicht fertig wird, lädt diese.</p>
+    </div>
+    <div style="text-align:center"><img class="shot" src="img/referenz-app.png" alt="Tasmota-Hauptseite mit Grafik: Einspeisung, Tarif und Vergütung über gestern, heute, morgen"></div>
+  </div>
+</section>
+
+<!-- 12 Weiter -->
+<section class="slide">
+  <div class="kicker">Und danach?</div>
+  <h2>Mit <code>/build</code> weiterbauen</h2>
+  <div class="cols3">
+    <div class="card"><h3>Robuster</h3><p>Zeitumstellung sauber: Tage mit 92 bzw. 100 Viertelstunden</p></div>
+    <div class="card"><h3>Vernetzt</h3><p>Tageswerte per MQTT an Home Assistant</p></div>
+    <div class="card"><h3>Schöner</h3><p>Monatsübersicht aus der CSV, Mockups in <code>spec/mockups/</code></p></div>
+  </div>
+  <p style="margin-top:32px">Regel bleibt: <b>Spec-Zeile + Test + Code</b> — keine Spec ohne Test, kein Test ohne Code.</p>
+  <p class="mut small" style="margin-top:auto">github.com/proBieri/glue-workshop-smart-energy · michael.bieri@glue.ch · gplug.ch</p>
+</section>
+
+</div>
+<div class="nav"><span id="cnt"></span><button onclick="go(-1)" aria-label="zurück">←</button><button onclick="go(1)" aria-label="weiter">→</button></div>
+<script>
+var s=[].slice.call(document.querySelectorAll('.slide')),i=0;
+function fit(){var k=Math.min(innerWidth/1280,innerHeight/720);s.forEach(function(x){x.style.transform='scale('+k+')';});}
+function show(n){i=Math.max(0,Math.min(s.length-1,n));s.forEach(function(x,j){x.classList.toggle('on',j===i);});
+  document.getElementById('cnt').textContent=(i+1)+' / '+s.length+' ';history.replaceState(null,'','#'+(i+1));}
+function go(d){show(i+d);}
+addEventListener('keydown',function(e){
+  if(['ArrowRight','PageDown',' '].indexOf(e.key)>=0){go(1);e.preventDefault();}
+  if(['ArrowLeft','PageUp'].indexOf(e.key)>=0){go(-1);e.preventDefault();}
+  if(e.key==='Home')show(0);if(e.key==='End')show(s.length-1);
+  if(e.key==='f'||e.key==='F'){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();}
+});
+addEventListener('hashchange',function(){var n=(parseInt(location.hash.slice(1))||1)-1;if(n!==i)show(n);});
+addEventListener('resize',fit);fit();show((parseInt(location.hash.slice(1))||1)-1);
+</script>
+</body>
+</html>
